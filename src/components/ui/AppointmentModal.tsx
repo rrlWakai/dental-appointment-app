@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Modal from "./Modal";
 import Button from "./Button";
+
+type Step = 1 | 2 | 3 | 4;
 
 const services = [
   "Teeth Cleaning",
@@ -19,221 +21,206 @@ const defaultTimeSlots = [
   "01:00 PM",
   "02:00 PM",
   "03:00 PM",
-] as const;
-
-type Payment = "clinic" | "online" | "";
+];
 
 interface AppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
+  prefillService?: string;
+  prefillDoctor?: string;
+  autoStep2?: boolean;
 }
 
-type FormState = {
-  step: 1 | 2 | 3 | 4;
-  service: string;
-  doctor: string;
-  date: string;
-  time: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  notes: string;
-  payment: Payment;
-};
-
-const initialForm: FormState = {
-  step: 1,
-  service: "",
-  doctor: "",
-  date: "",
-  time: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  notes: "",
-  payment: "",
-};
+function nextStep(s: Step): Step {
+  return Math.min(4, s + 1) as Step;
+}
+function prevStep(s: Step): Step {
+  return Math.max(1, s - 1) as Step;
+}
 
 export default function AppointmentModal({
   isOpen,
   onClose,
+  prefillService,
+  prefillDoctor,
+  autoStep2,
 }: AppointmentModalProps) {
-  const [form, setForm] = useState<FormState>(initialForm);
+  const initialStep: Step = autoStep2 ? 2 : 1;
+
+  const [step, setStep] = useState<Step>(initialStep);
+
+  // Step 1
+  const [service, setService] = useState(prefillService ?? "");
+  const [doctor, setDoctor] = useState(prefillDoctor ?? "");
+
+  // Step 2
+  const [date, setDate] = useState("");
   const [timeSlots, setTimeSlots] = useState<string[]>([]);
+  const [time, setTime] = useState("");
 
-  const stepLabels = useMemo(
-    () => ["Service", "Date & Time", "Details", "Payment"],
-    []
-  );
+  // Step 3
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
 
-  const todayISO = useMemo(() => new Date().toISOString().split("T")[0], []);
+  // Step 4
+  const [payment, setPayment] = useState<"clinic" | "online" | "">("");
 
-  // Reset ONLY when opening (prevents cascading setState warnings)
+  // ✅ Prefill sync when opening modal (fixes “Book with this doctor” always)
   useEffect(() => {
     if (!isOpen) return;
-    setForm(initialForm);
+
+    setStep(initialStep);
+    setService(prefillService ?? "");
+    setDoctor(prefillDoctor ?? "");
+
+    setDate("");
+    setTime("");
     setTimeSlots([]);
-  }, [isOpen]);
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhone("");
+    setNotes("");
+    setPayment("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, prefillService, prefillDoctor, autoStep2]);
 
-  // ESC close
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, onClose]);
-
-  // Auto scroll to top of modal content when changing steps
-  useEffect(() => {
-    if (!isOpen) return;
-    const el = document.querySelector("#appointment-scroll");
-    (el as HTMLElement | null)?.scrollTo({ top: 0, behavior: "smooth" });
-  }, [form.step, isOpen]);
-
-  const progressWidthClass =
-    form.step === 1
-      ? "w-0"
-      : form.step === 2
-      ? "w-1/3"
-      : form.step === 3
-      ? "w-2/3"
-      : "w-full";
-
-  const isNextDisabled = () => {
-    if (form.step === 1) return !form.service || !form.doctor;
-    if (form.step === 2) return !form.date || !form.time;
-    if (form.step === 3)
-      return !form.firstName || !form.lastName || !form.email || !form.phone;
+  const isNextDisabled = useMemo(() => {
+    if (step === 1) return !service || !doctor;
+    if (step === 2) return !date || !time;
+    if (step === 3) return !firstName || !lastName || !email || !phone;
     return false;
-  };
+  }, [step, service, doctor, date, time, firstName, lastName, email, phone]);
 
-  const handleNext = () => {
-    setForm((prev) => ({
-      ...prev,
-      step: Math.min(4, prev.step + 1) as FormState["step"],
-    }));
-  };
-
-  const handleBack = () => {
-    setForm((prev) => ({
-      ...prev,
-      step: Math.max(1, prev.step - 1) as FormState["step"],
-    }));
+  const closeAndReset = () => {
+    setStep(initialStep);
+    setService(prefillService ?? "");
+    setDoctor(prefillDoctor ?? "");
+    setDate("");
+    setTime("");
+    setTimeSlots([]);
+    setFirstName("");
+    setLastName("");
+    setEmail("");
+    setPhone("");
+    setNotes("");
+    setPayment("");
+    onClose();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     console.log({
-      ...form,
-      timeSlots,
+      service,
+      doctor,
+      date,
+      time,
+      firstName,
+      lastName,
+      email,
+      phone,
+      notes,
+      payment,
     });
 
     alert("Appointment booked successfully!");
-    onClose();
+    closeAndReset();
   };
 
-  // Styles
-  const inputClasses =
-    "w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-slate-900 placeholder-slate-400 shadow-sm outline-none backdrop-blur-xl focus:ring-2 focus:ring-blue-500";
-  const sectionClasses =
-    "rounded-2xl border border-white/20 bg-white/55 backdrop-blur-xl p-6 shadow-sm";
+  const stepLabels = ["Service", "Date & Time", "Details", "Payment"];
 
-  const optionBase =
-    "inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-blue-500";
-  const optionActive =
-    "border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-600/20 ring-2 ring-blue-400/30";
-  const optionIdle =
-    "border-slate-200 bg-white/70 text-slate-700 hover:bg-white";
+  const inputClasses =
+    "w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none placeholder-slate-400 bg-white/80";
+
+  const sectionClasses =
+    "rounded-2xl bg-white/55 backdrop-blur-xl border border-white/30 shadow-sm p-6";
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Book Your Appointment">
-      <form onSubmit={handleSubmit} className="space-y-7 max-w-xl mx-auto">
-        {/* Stepper */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            {stepLabels.map((label, i) => {
-              const idx = (i + 1) as FormState["step"];
-              const isActive = form.step === idx;
-              const isCompleted = form.step > idx;
+    <Modal
+      isOpen={isOpen}
+      onClose={closeAndReset}
+      title="Book Your Appointment"
+    >
+      <form onSubmit={handleSubmit} className="space-y-8 max-w-xl mx-auto">
+        {/* Step Indicator */}
+        <div className="flex justify-between items-center mb-8 relative">
+          {stepLabels.map((label, i) => {
+            const idx = (i + 1) as Step;
+            const isActive = step === idx;
+            const isCompleted = step > idx;
 
-              return (
+            return (
+              <div
+                key={label}
+                className="flex-1 relative flex flex-col items-center"
+              >
                 <div
-                  key={label}
-                  className="flex flex-col items-center gap-2 flex-1"
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold z-10 transition-all ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-lg"
+                      : isCompleted
+                      ? "bg-emerald-500 text-white"
+                      : "bg-slate-200 text-slate-600"
+                  }`}
                 >
-                  <div
-                    className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold transition ${
-                      isActive
-                        ? "bg-blue-600 text-white shadow-md shadow-blue-600/25"
-                        : isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : "bg-slate-200 text-slate-700"
-                    }`}
-                  >
-                    {idx}
-                  </div>
-                  <span
-                    className={`text-xs font-semibold ${
-                      isActive
-                        ? "text-blue-700"
-                        : isCompleted
-                        ? "text-emerald-700"
-                        : "text-slate-500"
-                    }`}
-                  >
-                    {label}
-                  </span>
+                  {i + 1}
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Progress bar (no inline styles) */}
-          <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-            <div
-              className={`h-full rounded-full bg-blue-600/80 transition-all duration-300 ${progressWidthClass}`}
-            />
-          </div>
+                <span
+                  className={`mt-2 text-xs sm:text-sm font-medium transition-colors ${
+                    isActive
+                      ? "text-blue-700"
+                      : isCompleted
+                      ? "text-emerald-700"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {label}
+                </span>
+
+                {i !== stepLabels.length - 1 && (
+                  <div
+                    className={`absolute top-5 right-0 h-1 w-full transform translate-x-1/2 -z-10 ${
+                      step > idx ? "bg-emerald-300" : "bg-slate-200"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <AnimatePresence mode="wait">
-          {/* STEP 1 */}
-          {form.step === 1 && (
+          {/* Step 1 */}
+          {step === 1 && (
             <motion.div
               key="step1"
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.22 }}
+              transition={{ duration: 0.2 }}
               className={`${sectionClasses} space-y-6`}
             >
               <div>
                 <p className="text-slate-700 font-semibold mb-3">
-                  Select Service <span className="text-rose-500">*</span>
+                  Select Service *
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {services.map((s) => (
                     <button
                       type="button"
                       key={s}
-                      onClick={() =>
-                        setForm((p) => ({
-                          ...p,
-                          service: s,
-                        }))
-                      }
-                      className={`${optionBase} ${
-                        form.service === s ? optionActive : optionIdle
+                      className={`px-5 py-3 rounded-xl font-semibold border transition-all ${
+                        service === s
+                          ? "bg-blue-600 text-white shadow-sm border-blue-600"
+                          : "bg-white/80 text-slate-800 border-slate-200 hover:bg-white"
                       }`}
+                      onClick={() => setService(s)}
                     >
-                      {form.service === s && (
-                        <span className="text-white">✓</span>
-                      )}
                       {s}
                     </button>
                   ))}
@@ -242,47 +229,36 @@ export default function AppointmentModal({
 
               <div>
                 <p className="text-slate-700 font-semibold mb-3">
-                  Preferred Doctor <span className="text-rose-500">*</span>
+                  Preferred Doctor *
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {doctors.map((d) => (
                     <button
                       type="button"
                       key={d}
-                      onClick={() =>
-                        setForm((p) => ({
-                          ...p,
-                          doctor: d,
-                        }))
-                      }
-                      className={`${optionBase} ${
-                        form.doctor === d ? optionActive : optionIdle
+                      className={`px-5 py-3 rounded-xl font-semibold border transition-all ${
+                        doctor === d
+                          ? "bg-blue-600 text-white shadow-sm border-blue-600"
+                          : "bg-white/80 text-slate-800 border-slate-200 hover:bg-white"
                       }`}
+                      onClick={() => setDoctor(d)}
                     >
-                      {form.doctor === d && (
-                        <span className="text-white">✓</span>
-                      )}
                       {d}
                     </button>
                   ))}
                 </div>
               </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-sm text-slate-600">
-                Tip: If you’re unsure, choose any doctor — we’ll confirm
-                availability after booking.
-              </div>
             </motion.div>
           )}
 
-          {/* STEP 2 */}
-          {form.step === 2 && (
+          {/* Step 2 */}
+          {step === 2 && (
             <motion.div
               key="step2"
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.22 }}
+              transition={{ duration: 0.2 }}
               className={`${sectionClasses} space-y-6`}
             >
               <div>
@@ -290,41 +266,40 @@ export default function AppointmentModal({
                   className="block text-slate-700 font-semibold mb-3"
                   htmlFor="date"
                 >
-                  Select Date <span className="text-rose-500">*</span>
+                  Select Date *
                 </label>
                 <input
                   id="date"
                   type="date"
-                  value={form.date}
-                  min={todayISO}
+                  value={date}
                   onChange={(e) => {
-                    const v = e.target.value;
-                    setForm((p) => ({ ...p, date: v, time: "" }));
-                    setTimeSlots([...defaultTimeSlots]);
+                    setDate(e.target.value);
+                    setTimeSlots(defaultTimeSlots);
+                    setTime("");
                   }}
                   className={inputClasses}
                   required
+                  min={new Date().toISOString().split("T")[0]}
                 />
               </div>
 
-              {form.date && (
+              {date && (
                 <div>
                   <p className="text-slate-700 font-semibold mb-3">
-                    Select Time <span className="text-rose-500">*</span>
+                    Select Time *
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {timeSlots.map((t) => (
                       <button
                         key={t}
                         type="button"
-                        onClick={() => setForm((p) => ({ ...p, time: t }))}
-                        className={`${optionBase} ${
-                          form.time === t ? optionActive : optionIdle
+                        className={`px-4 py-3 rounded-xl font-semibold border transition-all ${
+                          time === t
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                            : "bg-white/80 text-slate-800 border-slate-200 hover:bg-white"
                         }`}
+                        onClick={() => setTime(t)}
                       >
-                        {form.time === t && (
-                          <span className="text-white">✓</span>
-                        )}
                         {t}
                       </button>
                     ))}
@@ -334,34 +309,30 @@ export default function AppointmentModal({
             </motion.div>
           )}
 
-          {/* STEP 3 */}
-          {form.step === 3 && (
+          {/* Step 3 */}
+          {step === 3 && (
             <motion.div
               key="step3"
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.22 }}
-              className={`${sectionClasses} space-y-5`}
+              transition={{ duration: 0.2 }}
+              className={`${sectionClasses} space-y-4`}
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="text"
                   placeholder="First Name *"
-                  value={form.firstName}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, firstName: e.target.value }))
-                  }
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className={inputClasses}
                   required
                 />
                 <input
                   type="text"
                   placeholder="Last Name *"
-                  value={form.lastName}
-                  onChange={(e) =>
-                    setForm((p) => ({ ...p, lastName: e.target.value }))
-                  }
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className={inputClasses}
                   required
                 />
@@ -370,10 +341,8 @@ export default function AppointmentModal({
               <input
                 type="email"
                 placeholder="Email Address *"
-                value={form.email}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, email: e.target.value }))
-                }
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className={inputClasses}
                 required
               />
@@ -381,141 +350,93 @@ export default function AppointmentModal({
               <input
                 type="tel"
                 placeholder="Phone Number *"
-                value={form.phone}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, phone: e.target.value }))
-                }
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 className={inputClasses}
                 required
               />
 
               <textarea
                 placeholder="Additional Notes (optional)"
-                value={form.notes}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, notes: e.target.value }))
-                }
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
                 className={inputClasses}
                 rows={3}
               />
 
-              <div className="rounded-2xl border border-slate-200 bg-white/70 backdrop-blur-xl p-4 shadow-sm text-slate-700">
-                <h4 className="font-bold text-slate-900 mb-2">
-                  Appointment Summary
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                  <p>
-                    <span className="font-semibold">Service:</span>{" "}
-                    {form.service || "-"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Doctor:</span>{" "}
-                    {form.doctor || "-"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Date:</span>{" "}
-                    {form.date || "-"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Time:</span>{" "}
-                    {form.time || "-"}
-                  </p>
-                </div>
+              <div className="rounded-2xl border border-blue-200/60 bg-blue-50/60 p-4 text-slate-800">
+                <h4 className="font-bold mb-2">Appointment Summary</h4>
+                <p>Service: {service || "-"}</p>
+                <p>Doctor: {doctor || "-"}</p>
+                <p>Date: {date || "-"}</p>
+                <p>Time: {time || "-"}</p>
               </div>
             </motion.div>
           )}
 
-          {/* STEP 4 */}
-          {form.step === 4 && (
+          {/* Step 4 */}
+          {step === 4 && (
             <motion.div
               key="step4"
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.22 }}
-              className={`${sectionClasses} space-y-5`}
+              transition={{ duration: 0.2 }}
+              className={`${sectionClasses} space-y-4`}
             >
-              <div>
-                <p className="text-slate-700 font-semibold mb-2">
-                  Payment Method <span className="text-rose-500">*</span>
-                </p>
-                <p className="text-sm text-slate-600">
-                  Choose how you’d like to pay for your appointment.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <p className="text-slate-700 font-semibold mb-2">
+                Payment Method *
+              </p>
+              <div className="flex gap-4 flex-wrap">
                 <button
                   type="button"
-                  onClick={() => setForm((p) => ({ ...p, payment: "clinic" }))}
-                  className={`text-left rounded-2xl border p-5 transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    form.payment === "clinic"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/20 ring-2 ring-blue-400/30"
-                      : "border-slate-200 bg-white/70 text-slate-800 hover:bg-white"
+                  onClick={() => setPayment("clinic")}
+                  className={`flex-1 px-5 py-3 rounded-xl font-semibold border transition-all ${
+                    payment === "clinic"
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white/80 text-slate-800 border-slate-200 hover:bg-white"
                   }`}
                 >
-                  <p className="font-bold">Pay at Clinic</p>
-                  <p
-                    className={`mt-1 text-sm ${
-                      form.payment === "clinic"
-                        ? "text-white/85"
-                        : "text-slate-600"
-                    }`}
-                  >
-                    Pay after consultation. No online fees.
-                  </p>
+                  Pay at Clinic
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setForm((p) => ({ ...p, payment: "online" }))}
-                  className={`text-left rounded-2xl border p-5 transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    form.payment === "online"
-                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-600/20 ring-2 ring-blue-400/30"
-                      : "border-slate-200 bg-white/70 text-slate-800 hover:bg-white"
+                  onClick={() => setPayment("online")}
+                  className={`flex-1 px-5 py-3 rounded-xl font-semibold border transition-all ${
+                    payment === "online"
+                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                      : "bg-white/80 text-slate-800 border-slate-200 hover:bg-white"
                   }`}
                 >
-                  <p className="font-bold">Online Payment</p>
-                  <p
-                    className={`mt-1 text-sm ${
-                      form.payment === "online"
-                        ? "text-white/85"
-                        : "text-slate-600"
-                    }`}
-                  >
-                    Secure checkout. Confirmation is faster.
-                  </p>
+                  Online Payment
                 </button>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white/60 p-4 text-sm text-slate-600">
-                By confirming, you agree to receive updates via email/SMS
-                regarding your appointment.
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between gap-3">
-          {form.step > 1 ? (
-            <Button type="button" variant="secondary" onClick={handleBack}>
-              Back
-            </Button>
-          ) : (
-            <span />
-          )}
+        <div className="flex justify-between mt-6 pb-1">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setStep((s) => prevStep(s))}
+            disabled={step === 1}
+          >
+            Back
+          </Button>
 
-          {form.step < 4 ? (
+          {step < 4 ? (
             <Button
               type="button"
-              onClick={handleNext}
-              disabled={isNextDisabled()}
+              onClick={() => setStep((s) => nextStep(s))}
+              disabled={isNextDisabled}
             >
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={!form.payment}>
+            <Button type="submit" disabled={!payment}>
               Confirm Appointment
             </Button>
           )}
