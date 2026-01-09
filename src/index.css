@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+html {
+  scroll-padding-top: 88px; /* ~ navbar height + breathing room */
+}
