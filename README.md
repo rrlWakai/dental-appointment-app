@@ -1,73 +1,130 @@
-# React + TypeScript + Vite
+#  SmileCare – Dental Appointment Web App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, user-friendly dental clinic website designed to help patients understand services, consult their dental needs, and book appointments with confidence.
 
-Currently, two official plugins are available:
+This project focuses on **clear UX, reduced decision fatigue**, and a **consultation-first approach** rather than overwhelming users with booking options.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+##  Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+*  **Quick Consultation Flow**
 
-## Expanding the ESLint configuration
+  * Step-by-step questions to identify patient needs
+  * Provides service recommendations with urgency level
+*  **Doctor Profiles**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+  * Detailed doctor information (bio, specialties, schedule)
+  * Clean modal-based profile view
+*  **Service Overview**
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+  * “Learn More” modals explaining procedures and expectations
+  * No forced booking — education-first design
+* **Appointment Booking**
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+  * Multi-step booking modal (service, doctor, time, details)
+  * Prefill logic when booking from a specific doctor
+*  **Responsive Design**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+  * Optimized for desktop, tablet, and mobile
+*  **Modern UI**
+
+  * Glassmorphism, smooth animations, and soft gradients
+  * Built with accessibility and clarity in mind
+
+---
+
+## Tech Stack
+
+**Frontend**
+
+* React
+* TypeScript
+* Tailwind CSS
+* Framer Motion
+* Heroicons
+
+**Tooling**
+
+* Vite
+* Git & GitHub
+
+---
+
+##  Design Philosophy
+
+This app intentionally avoids excessive booking buttons.
+
+Instead:
+
+* Users are guided through **consultation first**
+* Services explain *what to expect*
+* Booking is contextual and purposeful
+
+This reduces cognitive load and improves trust — especially important in healthcare UX.
+
+---
+
+##  Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/dental-appointment-app.git
+cd dental-appointment-app
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+### 3. Run the development server
+
+```bash
+npm run dev
+```
+
+The app will be available at:
+
+```
+http://localhost:5173
+```
+
+---
+
+##  Screenshots (optional but recommended)
+
+> Add screenshots here for better presentation
+
+```md
+![Homepage](./screenshots/home.png)
+![Consultation Modal](./screenshots/consultation.png)
+```
+
+---
+
+## Future Improvements
+
+* Backend integration for appointments
+* Database support (patients, bookings)
+* Email notifications
+* Admin dashboard for clinic staff
+* Authentication (optional)
+
+---
+
+##  Author
+
+**Rhen-Rhen A. Lumbo**
+Frontend Developer | IT Student
+
+* GitHub: [https://github.com/YOUR_USERNAME](https://github.com/YOUR_USERNAME)
+* Portfolio: (add link if available)
+
+---
+
+## License
+
+This project is for educational and portfolio purposes.
