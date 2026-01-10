@@ -19,7 +19,7 @@ export default function Home({
 }: HomeProps) {
   return (
     <>
-      <Navbar onConsultation={onConsultation} />
+      <Navbar onBook={onConsultation} />
       <Hero onBook={onBook} />
       <Services />
       <Documentation />
