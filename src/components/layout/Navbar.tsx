@@ -3,12 +3,12 @@ import { SparklesIcon } from "@heroicons/react/24/solid";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface NavbarProps {
-  onConsultation: () => void;
+  onBook: () => void;
 }
 
 const links = ["Home", "Services", "Doctors", "Contact"] as const;
 
-export default function Navbar({ onConsultation }: NavbarProps) {
+export default function Navbar({ onBook }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   // lock body scroll when mobile menu is open
@@ -61,7 +61,7 @@ export default function Navbar({ onConsultation }: NavbarProps) {
 
             <div className="hidden md:flex items-center gap-3">
               <button
-                onClick={onConsultation}
+                onClick={onBook}
                 className="rounded-full bg-yellow-300 px-6 py-2.5 text-sm font-semibold text-blue-950 shadow-sm shadow-yellow-300/20
                   hover:bg-yellow-200 hover:shadow-yellow-200/30
                   focus:outline-none focus:ring-2 focus:ring-yellow-300/70 transition"
@@ -137,7 +137,7 @@ export default function Navbar({ onConsultation }: NavbarProps) {
                       <button
                         onClick={() => {
                           setIsOpen(false);
-                          onConsultation();
+                          onBook();
                         }}
                         className="w-full rounded-full bg-yellow-300 px-4 py-2.5 text-blue-950 font-semibold
                           hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-300/70 transition"
