@@ -1,4 +1,6 @@
 #  SmileCare – Dental Appointment Web App
+## 🌐 Live Demo
+https://smilecarebookingapp.vercel.app
 
 A modern, user-friendly dental clinic website designed to help patients understand services, consult their dental needs, and book appointments with confidence.
 
